@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лента сообщений</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        header {
+            background: #4a6ee0;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .message-form {
+            padding: 25px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #6e8efb;
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        button {
+            background: #4a6ee0;
+            color: white;
+            border: none;
+            padding: 14px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #3a5dc9;
+        }
+        
+        .messages-container {
+            padding: 20px;
+        }
+        
+        .messages-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+            color: #4a6ee0;
+        }
+        
+        .message {
+            background: white;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #6e8efb;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .author {
+            font-weight: 700;
+            color: #4a6ee0;
+        }
+        
+        .timestamp {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        .message-text {
+            line-height: 1.5;
+            color: #444;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            word-break: break-word;          
+}
+        
+        .empty-feed {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-style: italic;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                border-radius: 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .message-form, .messages-container {
+                padding: 15px;
+            }
+        }
+        
+        .hint {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💬 Лента сообщений</h1>
+            <p class="subtitle">Общий чат для всех пользователей</p>
+        </header>
+        
+        <div class="message-form">
+            <form id="messageForm">
+                <div class="form-group">
+                    <label for="name">Ваше имя:</label>
+                    <input type="text" id="name" placeholder="Как к вам обращаться?" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="message">Ваше сообщение:</label>
+                    <textarea id="message" placeholder="Напишите ваше сообщение здесь..." required></textarea>
+                </div>
+                
+                <button type="submit">Отправить сообщение</button>
+                <p class="hint">Для отправки нажмите Enter (Shift+Enter для переноса строки)</p>
+            </form>
+        </div>
+        
+        <div class="messages-container">
+            <h2 class="messages-title">Последние сообщения</h2>
+            <div id="messagesList">
+                <div class="empty-feed">Пока нет сообщений. Будьте первым!</div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2025 Лента сообщений</p>
+    </footer>
+
+    <div class="notification" id="notification">Сообщение отправлено!</div>
+
+    <script>
+        // API для работы с сервером
+const ServerAPI = {
+    async getMessages() {
+        const res = await fetch("/messages");
+        return res.json();
+    },
+    async saveMessage(name, text) {
+        const res = await fetch("/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, text })
+        });
+
+        // Пробуем прочитать JSON с полем error
+        let data;
+        try {
+            data = await res.json();
+        } catch(e) {
+            data = {};
+        }
+
+        return {
+            ok: res.ok,
+            error: data.error || 'Ошибка при отправке сообщения'
+        };
+    }
+};
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const messageForm = document.getElementById('messageForm');
+            const messagesList = document.getElementById('messagesList');
+            const nameInput = document.getElementById('name');
+            const messageInput = document.getElementById('message');
+            const notification = document.getElementById('notification');
+            
+            // Загружаем сообщения при загрузке страницы
+            loadMessages();
+            
+            setInterval(loadMessages, 2000);
+
+            // Обработчик отправки формы
+            messageForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = nameInput.value.trim();
+                const messageText = messageInput.value.trim();
+                
+                if (name && messageText) {
+                    sendMessage(name, messageText);
+                }
+            });
+            
+            // Обработчик нажатия Enter в поле сообщения
+            messageInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    messageForm.dispatchEvent(new Event('submit'));
+                }
+            });
+
+// Функция отправки сообщения            
+async function sendMessage(name, text) {
+    try {
+        const res = await fetch("/messages", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, text })
+        });
+
+        if (res.ok) {
+            messageInput.value = '';
+            showNotification('Сообщение отправлено!');
+            loadMessages();
+        } else {
+            const errorText = await res.text(); // читаем как текст
+            showNotification(errorText || 'Ошибка при отправке сообщения', true);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showNotification('Ошибка при отправке сообщения', true);
+    }
+}
+            
+// Функция загрузки сообщений
+async function loadMessages() {
+    try {
+        const messages = await ServerAPI.getMessages();
+
+        if (messages.length === 0) {
+            if (!messagesList.querySelector('.empty-feed')) {
+                messagesList.innerHTML = '<div class="empty-feed">Пока нет сообщений. Будьте первым!</div>';
+            }
+            return;
+        }
+        // Сортировка по новизне
+        messages.sort((a, b) => a.id - b.id);
+
+messages.forEach(message => {
+    if (!document.getElementById(`msg-${message.id}`)) {
+        displayMessage(message);
+    }
+});
+
+    } catch (error) {
+        console.error('Error:', error);
+        messagesList.innerHTML = '<div class="empty-feed">Ошибка загрузки сообщений</div>';
+    }
+}
+            
+function displayMessage(message) {
+    // Удаляем "пустую ленту", если есть
+    if (messagesList.querySelector('.empty-feed')) {
+        messagesList.innerHTML = '';
+    }
+
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message';
+    messageElement.id = `msg-${message.id}`;
+    messageElement.innerHTML = `
+        <div class="message-header">
+            <span class="author">${escapeHtml(message.name)}</span>
+            <span class="timestamp">${message.timestamp}</span>
+        </div>
+        <div class="message-text">${escapeHtml(message.text)}</div>
+    `;
+
+    // Вставляем в начало списка
+    if (messagesList.firstChild) {
+        messagesList.insertBefore(messageElement, messagesList.firstChild);
+    } else {
+        messagesList.appendChild(messageElement);
+    }
+}
+            
+            // Экранирование HTML
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+            
+            // Уведомления
+            function showNotification(text, isError = false) {
+                notification.textContent = text;
+                notification.classList.remove('error');
+                
+                if (isError) {
+                    notification.classList.add('error');
+                }
+                
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

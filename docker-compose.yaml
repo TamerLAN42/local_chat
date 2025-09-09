@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  chat:
+    build: ./server
+    container_name: chat
+    ports:
+      - "41957:41957"
+    volumes:
+      - ./server/messages.txt:/app/messages.txt   # сохраняем сообщения
+      - ./public:/app/public                      # HTML
+    restart: unless-stopped
